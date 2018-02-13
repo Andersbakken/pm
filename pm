@@ -4,8 +4,11 @@
 
 const options = require('@jhanssen/options')('pm');
 const gpg = require('gpg');
+const transform = require('./transform');
+const generator = require('./generator');
 
 const prompt = require('prompt');
+prompt.message = '';
 prompt.start();
 
 function read(name, opts)
@@ -18,7 +21,14 @@ function read(name, opts)
         }
 
         var schema = { properties: { } };
-        schema.properties[name] = { required: true, hidden: opts && opts.hidden };
+        schema.properties[name] = {
+            required: true
+        };
+        if (opts) {
+            for (let key in opts) {
+                schema.properties[name][key] = opts[key];
+            }
+        }
         prompt.get(schema, (err, result) => {
             if (err) {
                 reject(err);
@@ -29,20 +39,30 @@ function read(name, opts)
     });
 };
 
+var params = { password: undefined, components: {} };
 
-var user, host, password;
-read('user').then(resultUser => {
-    user = resultUser;
+read('user').then(result => {
+    params.components.user = result;
     return read('host');
-}).then(resultHost => {
-    host = resultHost;
+}).then(result => {
+    params.components.host = result;
+    return read('revision', { default: "1", pattern: /^[0-9]+$/ });
+}).then(result => {
+    params.components.revision = parseInt(result);
     return read('password', { hidden: true });
-}).then(resultPassword => {
-    password = resultPassword;
-}).then(() => {
-    console.log('user', user, 'host', host, 'password', password);
+}).then(result => {
+    params.password = result;
+    return read('length', { default: "12", pattern: /^[0-9]+$/ });
+}).then(result => {
+    params.length = parseInt(result);
+    return read('transform', { default: 'printable94' });
+}).then(result => {
+    const binary = generator(params);
+    const out = transform(result)(binary, params.length);
+    console.log('password:\n', out);
+    // console.log('user', user, 'host', host, 'password', password);
 }).catch(error => {
-    console.error('Got error', error.message);
+    console.error('Got error', error);
     process.exit(1);
 });
 
