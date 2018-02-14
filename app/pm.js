@@ -6,6 +6,7 @@ const transform = require('./transform');
 const generator = require('./generator');
 const prompt = require('prompt');
 const safe = require('safetydance');
+const blob = require('./blob');
 
 /* global require, process */
 module.exports = () => {
@@ -40,7 +41,8 @@ module.exports = () => {
         });
     };
 
-    var params = { password: undefined, components: {} };
+    let params = { password: undefined, components: {} };
+    let transformer;
     const server = options('server');
     let ws;
 
@@ -60,6 +62,7 @@ module.exports = () => {
         params.components.length = parseInt(result);
         return read('transform', { default: 'printable94' });
     }).then(result => {
+        transformer = result;
         const binary = generator(params);
         const out = transform(result)(binary, params.components.length);
         console.log('password:\n', out);
@@ -86,7 +89,24 @@ module.exports = () => {
             }
             switch (message.type) {
             case 'blob':
-                var entries = Blob.decrypt(Buffer.from(message.blob, 'base64'));
+                var entries = safe.JSON.parse(blob.decrypt(message.blob)) || [];
+                for (let i=0; i<entries.length; ++i) {
+                    if (entries[i].user == params.components.user && entries[i].host == params.components.host) {
+                        if (entries[i].revision == params.components.revision
+                            && entries[i].length == params.components.length
+                            && entries[i].transform == transformer) { // same, nothing to do
+                            process.exit();
+                        }
+                        entries.splice(i, 1);
+                        break;
+                    }
+                }
+                entries.push({ user: params.components.user,
+                               host: params.components.host,
+                               revision: params.components.revision,
+                               length: params.components.length,
+                               transform: transformer });
+                // encrypt and send back
             }
         });
 
