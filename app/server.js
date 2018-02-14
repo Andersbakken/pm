@@ -8,6 +8,7 @@ const expressWs = require('express-ws')(app);
 const ConfigStore = require('configstore');
 const crypto = require('crypto');
 const uuidv4 = require('uuid/v4');
+const safe = require('safetydance');
 
 const conf = new ConfigStore('pm-server');
 const users = conf.get('users') || {};
@@ -49,8 +50,19 @@ app.ws('/ws', (ws, req) => {
     const user = byUUID[key];
     console.log("got ws", req.headers, user);
     ws.send(JSON.stringify({type: 'blob', blob: users[user].blob || ""}));
-    ws.on('message', function(msg) {
+    ws.on('message', function(msgText) {
+        var msg = safe.JSON.parse(msgText) || {};
         console.log("got message", msg);
+        switch (msg.type) {
+        case 'update':
+            console.log("got here", user, msg.blob);
+            users[user].blob = msg.blob || "";
+            conf.set('users', users);
+            break;
+        case 'blob':
+            ws.send(JSON.stringify({type: 'blob', blob: users[user].blob || ""}));
+            break;
+        }
     });
 });
 

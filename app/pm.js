@@ -8,8 +8,19 @@ const prompt = require('prompt');
 const safe = require('safetydance');
 const blob = require('./blob');
 
+let last = Date.now();
+function timeStamp(tag)
+{
+    let now = Date.now();
+    console.log(tag, now - last);
+    last = Date.now();
+}
+timeStamp("global");
 /* global require, process */
 module.exports = () => {
+    timeStamp("exports");
+    // blob.test();
+    // process.exit();
     prompt.message = '';
     prompt.start();
 
@@ -43,7 +54,12 @@ module.exports = () => {
 
     let params = { password: undefined, components: {} };
     let transformer;
-    const server = options('server');
+    let server = options('server');
+    if (server[server.length - 1] == '/') {
+        server += 'ws';
+    } else if (!/\/ws$/.test(server)) {
+        server += '/ws';
+    }
     let ws;
 
     read('user').then(result => {
@@ -65,8 +81,7 @@ module.exports = () => {
         transformer = result;
         const binary = generator(params);
         const out = transform(result)(binary, params.components.length);
-        console.log('password:\n', out);
-        console.log(server);
+        console.log(out);
         if (server) {
             return read("upload", { message: `upload to ${server}`, default: "y", pattern: /^[YyNn]/ });
         }
@@ -76,37 +91,66 @@ module.exports = () => {
             process.exit();
         return read("cookie");
     }).then(cookie => {
+        timeStamp("createWS");
         ws = new WebSocket(server, { headers: { "x-pm-key": cookie }});
         ws.on('open', () => {
-            console.log("got open");
+            timeStamp("ws opened");
+            // console.log("got open");
         });
 
-        ws.on('message', msg => {
-            var message = safe.JSON.parse(msg);
-            if (message === undefined) {
+        ws.on('message', msgText => {
+            var msg = safe.JSON.parse(msgText);
+            if (msg === undefined) {
                 console.log("Bad json", msg);
                 return;
             }
-            switch (message.type) {
+            // console.log("got message", msg);
+            switch (msg.type) {
             case 'blob':
-                var entries = safe.JSON.parse(blob.decrypt(message.blob)) || [];
-                for (let i=0; i<entries.length; ++i) {
-                    if (entries[i].user == params.components.user && entries[i].host == params.components.host) {
-                        if (entries[i].revision == params.components.revision
-                            && entries[i].length == params.components.length
-                            && entries[i].transform == transformer) { // same, nothing to do
-                            process.exit();
-                        }
-                        entries.splice(i, 1);
-                        break;
+                timeStamp("ws got blob");
+                let entries;
+                // console.log("got blob", msg.blob);
+                if (msg.blob.length) {
+                    var b = blob.decode(msg.blob);
+                    timeStamp("ws got decoded");
+                    if (!b) {
+                        console.error("Can't decode blob");
+                    } else {
+                        let plainText = blob.decrypt(params.password, b);
+                        timeStamp("ws got decrypted");
+                        entries = safe.JSON.parse(plainText) || [];
+                        timeStamp("ws got JSON.parsed");
                     }
+                }
+
+                if (entries) {
+                    // console.log("got entries", entries);
+                    for (let i=0; i<entries.length; ++i) {
+                        if (entries[i].user == params.components.user && entries[i].host == params.components.host) {
+                            if (entries[i].revision == params.components.revision
+                                && entries[i].length == params.components.length
+                                && entries[i].transform == transformer) { // same, nothing to do
+                                process.exit();
+                            }
+                            entries.splice(i, 1);
+                            break;
+                        }
+                    }
+                    timeStamp("ws entries searched");
+                } else {
+                    entries = [];
                 }
                 entries.push({ user: params.components.user,
                                host: params.components.host,
                                revision: params.components.revision,
                                length: params.components.length,
                                transform: transformer });
-                // encrypt and send back
+                b = blob.encrypt(params.password, JSON.stringify(entries));
+                timeStamp("ws got encrypted");
+                // console.log("Made blob", b, blob.encode(b));
+                ws.send(JSON.stringify({type: 'update', blob: blob.encode(b)}));
+                timeStamp("ws got sent");
+                ws.close();
             }
         });
 
