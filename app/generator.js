@@ -8,7 +8,7 @@ module.exports = function(params) {
     for (let key in params.components) {
         if (buffers.length)
             buffers.push(Buffer.from([0]));
-        buffers.push(Buffer.from(params.components[key].toString(), 'utf-8'));
+        buffers.push(Buffer.from(params.components[key].toString(), 'utf8'));
     }
     var input = Buffer.concat(buffers);
     let hash = crypto.createHmac('sha512', params.password);
