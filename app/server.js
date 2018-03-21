@@ -3,7 +3,8 @@
 /* global require, Buffer, process */
 
 const options = require('@jhanssen/options')('pm-server');
-const app = require('express')();
+const express = require('express');
+const app = express();
 const expressWs = require('express-ws')(app);
 const ConfigStore = require('configstore');
 const crypto = require('crypto');
@@ -37,6 +38,8 @@ app.use((req, res, next) => {
     console.log("Request", req.url, req.headers, req.query);
     return next();
 });
+
+app.use(express.static("www"));
 
 app.ws('/ws', (ws, req) => {
     let user;

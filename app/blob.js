@@ -6,12 +6,11 @@ const scrypt = require('js-scrypt');
 const CurrentVersion = 1;
 const algorithm = 'aes-256-gcm';
 
-function deriveKey(password, username)
+function deriveKey(password, salt)
 {
     var now = Date.now();
-    let ret = scrypt.hashSync(password, username, { maxmem: 4, size: 32 });
-    // var ret = Buffer.alloc(32);
-    // Buffer.from(password, 'utf8').copy(
+    let ret = scrypt.hashSync(password, salt, { maxmem: 4, size: 32, cost: 2 });
+    // var ret = Buffer.alloc(32); Buffer.from(password, 'utf8').copy(
     console.log("deriveKey took", Date.now() - now);
     return ret;
 }

@@ -12,9 +12,15 @@ let last = Date.now();
 function timeStamp(tag)
 {
     let now = Date.now();
-    console.log(tag, now - last);
+    // console.log(tag, now - last);
     last = Date.now();
 }
+
+// const scrypt = require('js-scrypt');
+// let ret = scrypt.hashSync('foobar123', "1111111111111111", { maxmem: 8, parallel: 2, size: 32, cost: 2, blockSize: 8 });
+// console.log(ret, ret.toString('base64'));
+// process.exit();
+
 timeStamp("global");
 /* global require, process */
 module.exports = () => {
@@ -33,8 +39,9 @@ module.exports = () => {
                 return;
             }
 
-            var schema = { properties: { } };
+            var schema = { properties: { }, description: name };
             schema.properties[name] = {
+                description: name,
                 required: true
             };
             if (opts) {
@@ -110,13 +117,14 @@ module.exports = () => {
             case 'blob':
                 timeStamp("ws got blob");
                 let entries;
-                // console.log("got blob", msg.blob);
+                console.log("got blob", msg.blob);
                 if (msg.blob.length) {
                     var b = blob.decode(msg.blob);
                     timeStamp("ws got decoded");
                     if (!b) {
                         console.error("Can't decode blob");
                     } else {
+                        console.log("blob", b);
                         let plainText = blob.decrypt(params.password, b);
                         timeStamp("ws got decrypted");
                         entries = safe.JSON.parse(plainText) || [];
