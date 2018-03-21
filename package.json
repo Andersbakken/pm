@@ -11,6 +11,7 @@
   "dependencies": {
     "@jhanssen/options": "^1.0.4",
     "configstore": "^3.1.1",
+    "cors": "^2.8.4",
     "express": "^4.16.2",
     "express-ws": "^3.0.0",
     "gpg": "^0.6.0",

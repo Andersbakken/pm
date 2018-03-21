@@ -2,12 +2,14 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 
 import { QueueingSubject } from 'queueing-subject'
+import { Subject } from 'rxjs/Subject';
 import websocketConnect from 'rxjs-websockets'
 import 'rxjs/add/operator/map'
 
 @Injectable()
 export class ApiService {
     private input = new QueueingSubject<string>();
+    public blob: any;
 
     constructor(private http: HttpClient)
     {
@@ -15,23 +17,41 @@ export class ApiService {
 
     private makeRequest(path: string, query: string)
     {
-        console.log("making request", `http://localhost:8090${path}?${query}`);
-        return this.http.get(`http://localhost:8090${path}?${query}`).map((res: Response) => res.json());
+        return this.http.get(`http://localhost:8090${path}?${query}`).map((res: Response) => res);
     }
 
-    authorize(id: string, sms: string)
+    requestToken(id: string, sms: string)
     {
-        this.makeRequest("/authenticate/create", `id=${id}&user=${sms}`).subscribe(data => { console.log("got data", data); });
+        return this.makeRequest("/authenticate/create", `id=${id}&user=${sms}`);
     }
 
-    wsConnect()
+    requestKey(token: string, sms: string)
     {
+        return this.makeRequest("/authenticate/token", `token=${token}&user=${sms}`);
+    }
+
+    wsConnect(key: string)
+    {
+        console.log("login3");
+        const send = obj => {
+            this.input.next(JSON.stringify(obj));
+        }
+
         const { messages, connectionStatus } = websocketConnect(`ws://localhost:8090/ws`, this.input)
         connectionStatus.subscribe(connected => {
-            console.log("connected", connected);
+            if (connected == 1) {
+                send({ type: "login", key: key });
+            }
         });
         messages.subscribe((message: string) => {
             console.log("message", message);
+            const data = JSON.parse(message);
+            switch (data.type) {
+                case "blob":
+                    this.blob = data.blob;
+                    // ### change route here
+                    break;
+            }
         });
     }
 }

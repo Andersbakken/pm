@@ -8,6 +8,7 @@ import { LoginComponent } from './login/login.component';
 import { FormsModule } from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
 import { ApiService } from './api.service';
+import { LoginService } from './login.service';
 
 @NgModule({
     declarations: [
@@ -24,7 +25,7 @@ import { ApiService } from './api.service';
         HttpClientModule,
         FormsModule
     ],
-    providers: [ApiService],
+    providers: [ApiService, LoginService],
     bootstrap: [AppComponent]
 
 })

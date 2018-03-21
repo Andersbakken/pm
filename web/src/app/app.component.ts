@@ -1,4 +1,6 @@
 import { Component } from '@angular/core';
+import { ApiService } from './api.service';
+import { LoginService } from './login.service';
 
 @Component({
     selector: 'app-root',
@@ -7,8 +9,13 @@ import { Component } from '@angular/core';
 })
 export class AppComponent {
     title = 'app';
+    loginRequired = true;
 
-    loginRequired() {
-        return true;
+    constructor(private api: ApiService, private login: LoginService) {
+        const key = this.login.getKey();
+        if (key) {
+            this.api.wsConnect(key);
+            this.loginRequired = false;
+        }
     }
 }

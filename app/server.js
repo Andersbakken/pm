@@ -10,6 +10,7 @@ const ConfigStore = require('configstore');
 const crypto = require('crypto');
 const uuidv4 = require('uuid/v4');
 const safe = require('safetydance');
+const cors = require('cors');
 
 const conf = new ConfigStore('pm-server');
 const users = conf.get('users') || {};
@@ -33,6 +34,8 @@ for (var user in users) {
         });
     }
 }
+
+app.use(cors());
 
 app.use((req, res, next) => {
     console.log("Request", req.url, req.headers, req.query);
@@ -106,7 +109,7 @@ app.get('/authenticate/create', (req, res) => {
     }
     console.log(`send email to user: ${user} with token: ${data.token}: curl -v "http://localhost:${port}/authenticate/token/?user=${user}&token=${data.token}"`);
     // console.log("send email with
-    res.sendStatus(200);
+    res.status(200).send({ ok: true });
 });
 
 app.get('/authenticate/token', (req, res) => {
@@ -134,8 +137,7 @@ app.get('/authenticate/token', (req, res) => {
     delete data.tokenId;
     conf.set('users', users);
 
-    res.cookie('x-pm-key', uuid, { httpOnly: true, secure: false });
-    res.sendStatus(200);
+    res.status(200).send({ key: uuid });
 });
 
 const port = options.int('port', 8090);

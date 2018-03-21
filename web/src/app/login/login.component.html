@@ -1,9 +1,15 @@
-<div>
+<div *ngIf="!waitingForToken">
   <mat-form-field>
     <input matInput [(ngModel)]="phone" type="text" placeholder="phone">
   </mat-form-field>
   <mat-form-field>
     <input matInput [(ngModel)]="id" type="text" placeholder="id">
+  </mat-form-field>
+</div>
+
+<div *ngIf="waitingForToken">
+    <mat-form-field>
+    <input matInput [(ngModel)]="token" type="text" placeholder="token">
   </mat-form-field>
 </div>
 
