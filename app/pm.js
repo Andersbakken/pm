@@ -92,10 +92,11 @@ module.exports = () => {
         return read("cookie");
     }).then(cookie => {
         timeStamp("createWS");
-        ws = new WebSocket(server, { headers: { "x-pm-key": cookie }});
+        ws = new WebSocket(server);
         ws.on('open', () => {
             timeStamp("ws opened");
-            // console.log("got open");
+            console.log("got open, sending login");
+            ws.send(JSON.stringify({ type: "login", key: cookie}));
         });
 
         ws.on('message', msgText => {

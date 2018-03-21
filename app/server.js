@@ -39,28 +39,42 @@ app.use((req, res, next) => {
 });
 
 app.ws('/ws', (ws, req) => {
-    let key = req.headers["x-pm-key"];
-    console.log("got key", key, Object.keys(byUUID));
-
-    if (!(key in byUUID)) {
-        console.error("no key, we're out");
-        ws.close();
-        return;
-    }
-    const user = byUUID[key];
-    console.log("got ws", req.headers, user);
-    ws.send(JSON.stringify({type: 'blob', blob: users[user].blob || ""}));
+    let user;
+    console.log("got ws", user);
     ws.on('message', function(msgText) {
         var msg = safe.JSON.parse(msgText) || {};
         console.log("got message", msg);
         switch (msg.type) {
+        case 'login':
+            let key = msg.key;
+            console.log("got key", key, Object.keys(byUUID));
+            if (!(key in byUUID)) {
+                console.error("no key, we're out");
+                ws.close();
+                break;
+            }
+            user = byUUID[key];
+            ws.send(JSON.stringify({type: 'blob', blob: users[user].blob || ""}));
+            break;
         case 'update':
+            if (!user) {
+                ws.close();
+                break;
+            }
             console.log("got here", user, msg.blob);
             users[user].blob = msg.blob || "";
             conf.set('users', users);
             break;
         case 'blob':
+            if (!user) {
+                ws.close();
+                break;
+            }
             ws.send(JSON.stringify({type: 'blob', blob: users[user].blob || ""}));
+            break;
+        default:
+            console.error("bad message", msgText);
+            ws.close();
             break;
         }
     });
