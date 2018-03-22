@@ -27,8 +27,8 @@ export class BlobService {
         return bytes.buffer;
     }
 
-    Version: 100;
-    NoCipherVersion: 2;
+    Version = 100;
+    NoCipherVersion = 2;
 
     decodeBlob(password: string, blob: string)
     {
