@@ -9,6 +9,7 @@ import { FormsModule } from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
 import { ApiService } from './api.service';
 import { LoginService } from './login.service';
+import { BlobService } from './blob.service';
 
 import { RouterModule, Routes } from '@angular/router';
 import { PasswordsComponent } from './passwords/passwords.component';
@@ -45,7 +46,7 @@ const appRoutes: Routes =
 
         RouterModule.forRoot(appRoutes)
     ],
-    providers: [ApiService, LoginService],
+    providers: [ApiService, LoginService, BlobService],
     bootstrap: [AppComponent]
 
 })
