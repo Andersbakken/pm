@@ -1,6 +1,6 @@
 import { BrowserModule } from '@angular/platform-browser';
 import { NgModule } from '@angular/core';
-import { MatButtonModule, MatCheckboxModule, MatInputModule, MatFormFieldModule } from '@angular/material';
+import { MatButtonModule, MatCheckboxModule, MatInputModule, MatFormFieldModule, MatTableModule } from '@angular/material';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 
 import { AppComponent } from './app.component';
@@ -10,20 +10,40 @@ import { HttpClientModule } from '@angular/common/http';
 import { ApiService } from './api.service';
 import { LoginService } from './login.service';
 
+import { RouterModule, Routes } from '@angular/router';
+import { PasswordsComponent } from './passwords/passwords.component';
+
+const appRoutes: Routes =
+    [{
+        path: 'login',
+        component: LoginComponent
+    }, {
+        path: 'passwords',
+        component: PasswordsComponent
+    }, {
+        path: '',
+        redirectTo: '/login',
+        pathMatch: 'full'
+    }];
+
 @NgModule({
     declarations: [
         AppComponent,
-        LoginComponent
+        LoginComponent,
+        PasswordsComponent
     ],
     imports: [
         BrowserModule,
         MatButtonModule,
         MatCheckboxModule,
+        MatTableModule,
         MatInputModule,
         MatFormFieldModule,
         BrowserAnimationsModule,
         HttpClientModule,
-        FormsModule
+        FormsModule,
+
+        RouterModule.forRoot(appRoutes)
     ],
     providers: [ApiService, LoginService],
     bootstrap: [AppComponent]
