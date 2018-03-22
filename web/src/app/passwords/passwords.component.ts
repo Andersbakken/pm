@@ -25,4 +25,8 @@ export class PasswordsComponent implements OnInit {
     ngOnInit() {
     }
 
+    onRowClicked(row) {
+        console.log("row clicked", row);
+    }
+
 }
